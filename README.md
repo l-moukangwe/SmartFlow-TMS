@@ -57,5 +57,13 @@ SmartFlow is a real-time traffic management system developed for the INT316D sem
 ## Screenshots
 [Add screenshots here]
 
+## Database Setup
+
+1. Create a MySQL database on your cloud server or locally
+2. Import the database script:
+
+```bash
+mysql -u your_username -p your_database < database/smartflow.sql
+
 ## Submission Date
 May 11, 2026
