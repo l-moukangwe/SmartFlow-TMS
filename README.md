@@ -85,6 +85,3 @@ SmartFlow is a real-time traffic management system developed for the INT316D sem
 
 ```bash
 mysql -u your_username -p your_database < database/smartflow.sql
-
-## Submission Date
-May 11, 2026
