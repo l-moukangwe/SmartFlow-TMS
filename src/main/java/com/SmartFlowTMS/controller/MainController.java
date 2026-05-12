@@ -25,6 +25,36 @@ public class MainController {
         return DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
     }
     
+    // ========== ACCESS CONTROL METHODS ==========
+    private boolean canAccessIncidents(HttpSession session) {
+        String role = (String) session.getAttribute("role");
+        Integer userId = (Integer) session.getAttribute("user_id");
+        // Admin OR Dispatcher OR Magongoa (user_id=3)
+        return "Admin".equals(role) || "Dispatcher".equals(role) || (userId != null && userId == 3);
+    }
+    
+    private boolean canAccessSensors(HttpSession session) {
+        String role = (String) session.getAttribute("role");
+        Integer userId = (Integer) session.getAttribute("user_id");
+        // Admin OR Maintenance OR Moukangwe (user_id=2)
+        return "Admin".equals(role) || "Maintenance".equals(role) || (userId != null && userId == 2);
+    }
+    
+    private boolean canAccessSignals(HttpSession session) {
+        String role = (String) session.getAttribute("role");
+        Integer userId = (Integer) session.getAttribute("user_id");
+        // Admin OR City Planner OR Lutchman (user_id=4)
+        return "Admin".equals(role) || "City Planner".equals(role) || (userId != null && userId == 4);
+    }
+    
+    private boolean canAccessUsers(HttpSession session) {
+        String role = (String) session.getAttribute("role");
+        Integer userId = (Integer) session.getAttribute("user_id");
+        // Admin OR Matlala (user_id=1)
+        return "Admin".equals(role) || (userId != null && userId == 1);
+    }
+    
+    // ========== LOGIN ==========
     @GetMapping("/")
     public String home() { return "redirect:/login"; }
     
@@ -75,10 +105,15 @@ public class MainController {
     @GetMapping("/logout")
     public String logout(HttpSession session) { session.invalidate(); return "redirect:/login"; }
     
-    // ========== INCIDENTS MODULE ==========
+    // ========== INCIDENTS MODULE (Restricted) ==========
     @GetMapping("/incidents")
     public String incidents(HttpSession session, Model model) {
         if (session.getAttribute("user_id") == null) return "redirect:/login";
+        if (!canAccessIncidents(session)) {
+            model.addAttribute("error", "You do not have permission to access Incidents module.");
+            return "dashboard";
+        }
+        
         List<Map<String, Object>> incidents = new ArrayList<>();
         try (Connection conn = getConnection()) {
             String sql = "SELECT i.*, CONCAT(u.f_name, ' ', u.l_name) as reported_by_name FROM traffic_incidents i LEFT JOIN users u ON i.reported_by = u.user_id ORDER BY i.reported_at DESC";
@@ -100,8 +135,12 @@ public class MainController {
     }
     
     @GetMapping("/incidents/resolve")
-    public String resolveIncident(@RequestParam int id, HttpSession session) {
+    public String resolveIncident(@RequestParam int id, HttpSession session, Model model) {
         if (session.getAttribute("user_id") == null) return "redirect:/login";
+        if (!canAccessIncidents(session)) {
+            model.addAttribute("error", "You do not have permission to resolve incidents.");
+            return "dashboard";
+        }
         try (Connection conn = getConnection()) {
             PreparedStatement stmt = conn.prepareStatement("UPDATE traffic_incidents SET status='Resolved', resolved_at=NOW() WHERE incident_id=?");
             stmt.setInt(1, id);
@@ -110,10 +149,15 @@ public class MainController {
         return "redirect:/incidents";
     }
     
-    // ========== SENSORS MODULE ==========
+    // ========== SENSORS MODULE (Restricted) ==========
     @GetMapping("/sensors")
     public String sensors(HttpSession session, Model model) {
         if (session.getAttribute("user_id") == null) return "redirect:/login";
+        if (!canAccessSensors(session)) {
+            model.addAttribute("error", "You do not have permission to access Sensors module.");
+            return "dashboard";
+        }
+        
         List<Map<String, Object>> sensors = new ArrayList<>();
         try (Connection conn = getConnection()) {
             ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM traffic_sensors ORDER BY sensor_id");
@@ -132,8 +176,12 @@ public class MainController {
     }
     
     @PostMapping("/sensors/add")
-    public String addSensor(@RequestParam String sensor_name, @RequestParam String location, @RequestParam String sensor_type, @RequestParam String status, HttpSession session) {
+    public String addSensor(@RequestParam String sensor_name, @RequestParam String location, @RequestParam String sensor_type, @RequestParam String status, HttpSession session, Model model) {
         if (session.getAttribute("user_id") == null) return "redirect:/login";
+        if (!canAccessSensors(session)) {
+            model.addAttribute("error", "You do not have permission to add sensors.");
+            return "dashboard";
+        }
         try (Connection conn = getConnection()) {
             PreparedStatement stmt = conn.prepareStatement("INSERT INTO traffic_sensors (sensor_name, location, sensor_type, status, installed_date) VALUES (?, ?, ?, ?, CURDATE())");
             stmt.setString(1, sensor_name);
@@ -146,8 +194,12 @@ public class MainController {
     }
     
     @GetMapping("/sensors/delete")
-    public String deleteSensor(@RequestParam int id, HttpSession session) {
+    public String deleteSensor(@RequestParam int id, HttpSession session, Model model) {
         if (session.getAttribute("user_id") == null) return "redirect:/login";
+        if (!canAccessSensors(session)) {
+            model.addAttribute("error", "You do not have permission to delete sensors.");
+            return "dashboard";
+        }
         try (Connection conn = getConnection()) {
             PreparedStatement stmt = conn.prepareStatement("DELETE FROM traffic_sensors WHERE sensor_id=?");
             stmt.setInt(1, id);
@@ -156,10 +208,15 @@ public class MainController {
         return "redirect:/sensors";
     }
     
-    // ========== SIGNALS MODULE ==========
+    // ========== SIGNALS MODULE (Restricted) ==========
     @GetMapping("/signals")
     public String signals(HttpSession session, Model model) {
         if (session.getAttribute("user_id") == null) return "redirect:/login";
+        if (!canAccessSignals(session)) {
+            model.addAttribute("error", "You do not have permission to access Signals module.");
+            return "dashboard";
+        }
+        
         List<Map<String, Object>> signals = new ArrayList<>();
         try (Connection conn = getConnection()) {
             ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM traffic_signals ORDER BY signal_id");
@@ -178,8 +235,12 @@ public class MainController {
     }
     
     @PostMapping("/signals/update")
-    public String updateSignal(@RequestParam int signal_id, @RequestParam String status, HttpSession session) {
+    public String updateSignal(@RequestParam int signal_id, @RequestParam String status, HttpSession session, Model model) {
         if (session.getAttribute("user_id") == null) return "redirect:/login";
+        if (!canAccessSignals(session)) {
+            model.addAttribute("error", "You do not have permission to update signals.");
+            return "dashboard";
+        }
         try (Connection conn = getConnection()) {
             PreparedStatement stmt = conn.prepareStatement("UPDATE traffic_signals SET status=?, last_updated=NOW() WHERE signal_id=?");
             stmt.setString(1, status);
@@ -189,10 +250,15 @@ public class MainController {
         return "redirect:/signals";
     }
     
-    // ========== USERS MODULE ==========
+    // ========== USERS MODULE (Restricted) ==========
     @GetMapping("/users")
     public String users(HttpSession session, Model model) {
         if (session.getAttribute("user_id") == null) return "redirect:/login";
+        if (!canAccessUsers(session)) {
+            model.addAttribute("error", "You do not have permission to access Users module.");
+            return "dashboard";
+        }
+        
         List<Map<String, Object>> users = new ArrayList<>();
         try (Connection conn = getConnection()) {
             ResultSet rs = conn.createStatement().executeQuery("SELECT user_id, username, f_name, l_name, role, email FROM users ORDER BY user_id");
@@ -212,8 +278,12 @@ public class MainController {
     }
     
     @PostMapping("/users/add")
-    public String addUser(@RequestParam String username, @RequestParam String password, @RequestParam String f_name, @RequestParam String l_name, @RequestParam String email, @RequestParam String role, HttpSession session) {
+    public String addUser(@RequestParam String username, @RequestParam String password, @RequestParam String f_name, @RequestParam String l_name, @RequestParam String email, @RequestParam String role, HttpSession session, Model model) {
         if (session.getAttribute("user_id") == null) return "redirect:/login";
+        if (!canAccessUsers(session)) {
+            model.addAttribute("error", "You do not have permission to add users.");
+            return "dashboard";
+        }
         try (Connection conn = getConnection()) {
             PreparedStatement stmt = conn.prepareStatement("INSERT INTO users (username, password_hash, f_name, l_name, email, role) VALUES (?, ?, ?, ?, ?, ?)");
             stmt.setString(1, username);
@@ -228,8 +298,12 @@ public class MainController {
     }
     
     @PostMapping("/users/update")
-    public String updateUser(@RequestParam int user_id, @RequestParam String role, HttpSession session) {
+    public String updateUser(@RequestParam int user_id, @RequestParam String role, HttpSession session, Model model) {
         if (session.getAttribute("user_id") == null) return "redirect:/login";
+        if (!canAccessUsers(session)) {
+            model.addAttribute("error", "You do not have permission to update users.");
+            return "dashboard";
+        }
         try (Connection conn = getConnection()) {
             PreparedStatement stmt = conn.prepareStatement("UPDATE users SET role=? WHERE user_id=?");
             stmt.setString(1, role);
