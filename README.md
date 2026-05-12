@@ -55,7 +55,33 @@ SmartFlow is a real-time traffic management system developed for the INT316D sem
 - traffic_signals
 
 ## Screenshots
-[Add screenshots here]
+## Screenshots
 
-## Submission Date
-May 11, 2026
+### Login Page
+![Login Page](screenshots/login-page.png)
+
+### Dashboard
+![Dashboard](screenshots/dashboard.png)
+
+### Incidents Module
+![Incidents](screenshots/incidents-page.png)
+
+### Sensors Module
+![Sensors](screenshots/sensors-page.png)
+
+### Signals Module
+![Signals](screenshots/signals-page.png)
+
+### Users Module
+![Users](screenshots/users-page.png)
+
+### Database Tables
+![Database](screenshots/database-tables.png)
+
+## Database Setup
+
+1. Create a MySQL database on your cloud server or locally
+2. Import the database script:
+
+```bash
+mysql -u your_username -p your_database < database/smartflow.sql
