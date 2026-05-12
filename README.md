@@ -55,7 +55,6 @@ SmartFlow is a real-time traffic management system developed for the INT316D sem
 - traffic_signals
 
 ## Screenshots
-## Screenshots
 
 ### Login Page
 ![Login Page](screenshots/login-page.png)
