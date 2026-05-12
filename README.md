@@ -35,7 +35,7 @@ SmartFlow is a real-time traffic management system developed for the INT316D sem
 - Maven
 
 ### Steps
-1. Clone the repository: `git clone https://github.com/YOUR_USERNAME/SmartFlow-TMS.git`
+1. Clone the repository: `git clone https://github.com/l-moukangwe/SmartFlow-TMS.git`
 2. Import as Maven project in Eclipse
 3. Update `application.properties` with your database credentials
 4. Run `SmartFlowTmsApplication.java`
